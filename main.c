@@ -4,6 +4,7 @@
 #include <signal.h>
 
 AudioUnit outputUnit;
+Float32 volume;
 
 /**
  * Fill the audio unit's buffer
@@ -14,22 +15,25 @@ OSStatus fillAudioUnitBuffer(void 		*inRefCon,
 			UInt32 						inBusNumber, 
 			UInt32 						inNumberFrames, 
 			AudioBufferList 			*ioData) {
-
+	int i;
 	unsigned char buffer[inNumberFrames];
 	int count = fread(buffer, 1, inNumberFrames, stdin);
-	if (!count) {
-		return noErr;
+	if (count < inNumberFrames) {
+		for (i = count; i < inNumberFrames; i++) {
+			buffer[i] = 0x80;
+		}
 	}
 
-	int channel, frame, i = 0;
+	int channel, frame;
+	i = 0;
 	for (channel = ioData->mNumberBuffers - 1; channel >= 0; channel--) {
 		for (frame = inNumberFrames - 1; frame >= 0; frame--) {
-			((Float32 *)(ioData->mBuffers[channel].mData))[frame] = buffer[frame] / 256.f;
-			if (++i >= count) {
+			((Float32 *)(ioData->mBuffers[channel].mData))[frame] = buffer[frame] / 256.f * volume;
+			if (++i >= inNumberFrames) {
 				break;
 			}
 		}
-		if (i >= count) {
+		if (i >= inNumberFrames) {
 			break;
 		}
 	}
@@ -131,17 +135,29 @@ void signalHandler(int signal) {
 }
 
 void usage() {
-	fprintf(stderr, "usage: cat /dev/urandom | audiopipe -r 44100\n");
+	fprintf(stderr, "Usage: cat /dev/urandom | audiopipe -r 44100 -g 0.5\n");
+	fprintf(stderr, "  -r 8000\t\tspecify sample rate(in Hz), default: 8000\n");
+	fprintf(stderr, "  -g 1.0\t\tspecify volume(0.0 to 1.0), default: 1.0\n");
 	exit(1);
 }
 
 int main(int argc, char** argv) {
 	int sample_rate = 8000;
+	volume = 1.f;
 
 	int opt;
  	extern char	*optarg;
-	while ((opt = getopt(argc, argv, "r:")) != -1) {
+	while ((opt = getopt(argc, argv, "g:r:")) != -1) {
 		switch (opt) {
+			case 'g':
+				volume = atof(optarg);
+				if (volume < 0.f) {
+					volume = 0.f;
+				}
+				if (volume > 1.f) {
+					volume = 1.f;
+				}
+				break;
 			case 'r':
 				sample_rate = atoi(optarg);
 				break;
