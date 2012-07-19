@@ -1,3 +1,4 @@
+#include <CoreServices/CoreServices.h>
 #include <OpenGL/gl.h>
 #include <GLUT/glut.h>
 #include <unistd.h>
@@ -51,10 +52,12 @@ void key(unsigned char key, int x, int y) {
 		if (isFullScreen) {
 		    glutReshapeWindow(windowWidth, windowHeight);
 		    glutPositionWindow(75, 100);
+			glutSetCursor(GLUT_CURSOR_INHERIT);
 
 		    isFullScreen = 0;
 		} else {
 			glutFullScreen();
+			glutSetCursor(GLUT_CURSOR_NONE);
 
 			isFullScreen = 1;
 		}
@@ -93,7 +96,7 @@ int main(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(windowWidth, windowHeight);
-	glutCreateWindow("graphpipe");
+	glutCreateWindow("videopipe");
 
 	// register callbacks
 	glutDisplayFunc(display_func);
