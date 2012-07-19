@@ -1,12 +1,21 @@
-PROGRAM = audiopipe
+PROGRAM = all
 
-$(PROGRAM): main.o
-	gcc -framework CoreServices -framework CoreAudio -framework AudioUnit -o $(PROGRAM) main.o
+all: videopipe audiopipe
+
+audiopipe: main.o
+	gcc -framework CoreServices -framework CoreAudio -framework AudioUnit -o audiopipe main.o
 
 main.o: main.c
 	gcc -c main.c
 
-clean:; rm -f *.o *~ $(PROGRAM)
+videopipe: videopipe.o
+	gcc -framework OpenGL -framework GLUT -o videopipe videopipe.o
 
-install: $(PROGRAM)
-	install -s $(PROGRAM) /usr/local/bin
+videopipe.o: videopipe.c
+	gcc -c videopipe.c
+
+clean:; rm -f *.o *~ audiopipe videopipe
+
+install:
+	install -s audiopipe /usr/local/bin
+	install -s videopipe /usr/local/bin

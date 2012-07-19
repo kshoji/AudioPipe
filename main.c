@@ -7,6 +7,7 @@ AudioUnit outputUnit;
 Float32 volume;
 long bytesPlayed;
 int verbose;
+int output;
 
 /**
  * Fill the audio unit's buffer
@@ -21,6 +22,12 @@ OSStatus fillAudioUnitBuffer(void 		*inRefCon,
 	unsigned char buffer[inNumberFrames];
 	int count = fread(buffer, 1, inNumberFrames, stdin);
 	bytesPlayed += count;
+
+	if (output) {
+		for (i = 0; i < count; i++) {
+			putchar(buffer[i]);
+		}
+	}
 	if (count < inNumberFrames) {
 		for (i = count; i < inNumberFrames; i++) {
 			buffer[i] = 0x80;
@@ -136,7 +143,7 @@ void signalHandler(int signal) {
 	switch (signal) {
 		case SIGINT:
 			if (verbose) {
-				printf("%ld bytes played.\n", bytesPlayed);
+				fprintf(stderr, "%ld bytes played.\n", bytesPlayed);
 			}
 		case SIGTERM:
 			closeAudioOutput();
@@ -149,6 +156,7 @@ void usage() {
 	fprintf(stderr, "Usage: cat /dev/urandom | audiopipe -r 44100 -g 0.5\n");
 	fprintf(stderr, "  -r 8000\t\tspecify sample rate(in Hz), default: 8000\n");
 	fprintf(stderr, "  -g 1.0\t\tspecify volume(0.0 to 1.0), default: 1.0\n");
+	fprintf(stderr, "  -o    \t\toutput played buffer to stdout, default: unset\n");
 	fprintf(stderr, "  -v    \t\tdisplays played file size when the process finished by ctrl-c, default: unset\n");
 	exit(1);
 }
@@ -158,10 +166,11 @@ int main(int argc, char** argv) {
 	volume = 1.f;
 	bytesPlayed = 0;
 	verbose = 0;
+	output = 0;
 
 	int opt;
  	extern char	*optarg;
-	while ((opt = getopt(argc, argv, "g:r:v")) != -1) {
+	while ((opt = getopt(argc, argv, "g:r:vo")) != -1) {
 		switch (opt) {
 			case 'g':
 				volume = atof(optarg);
@@ -174,6 +183,9 @@ int main(int argc, char** argv) {
 				break;
 			case 'r':
 				sample_rate = atoi(optarg);
+				break;
+			case 'o':
+				output = 1;
 				break;
 			case 'v':
 				verbose = 1;
