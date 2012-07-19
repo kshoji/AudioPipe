@@ -148,7 +148,6 @@ void signalHandler(int signal) {
 		case SIGTERM:
 			closeAudioOutput();
 			exit(0);
-			break;
 	}
 }
 
@@ -167,6 +166,11 @@ int main(int argc, char** argv) {
 	bytesPlayed = 0;
 	verbose = 0;
 	output = 0;
+
+	if (isatty(fileno(stdin))) {
+		// run from command line, not pipe
+		usage();
+	}
 
 	int opt;
  	extern char	*optarg;
